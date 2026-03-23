@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1 class="hero-title">The Hidden Library</h1>
+    <p class="hero-subtitle">Sacred texts, forbidden knowledge, and ancient wisdom. {{ stats.total_books }} texts spanning {{ stats.categories }} traditions.</p>
+</div>
+
+{% if passage %}
+<section class="daily-wisdom">
+    <div class="wisdom-card">
+        <div class="wisdom-icon">&#9765;</div>
+        <blockquote class="wisdom-text" id="wisdomText">{{ passage.text|truncate_words(60) }}</blockquote>
+        <cite class="wisdom-source" id="wisdomSource">
+            &mdash; <a href="/search?q={{ passage.title|urlencode }}">{{ passage.title }}</a>
+            by {{ passage.author }}
+        </cite>
+        <button class="btn btn-ghost" onclick="refreshPassage()">New Passage &#8634;</button>
+    </div>
+</section>
+{% endif %}
+
+<section class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_books }}</div>
+        <div class="stat-label">Texts in Library</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.downloaded }}</div>
+        <div class="stat-label">Downloaded</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ "{:,}".format(stats.total_words) }}</div>
+        <div class="stat-label">Total Words</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.categories }}</div>
+        <div class="stat-label">Traditions</div>
+    </div>
+</section>
+
+{% if recent_books %}
+<section class="section">
+    <h2 class="section-title">Continue Reading</h2>
+    <div class="book-grid">
+        {% for book in recent_books %}
+        <a href="/read/{{ book.id }}" class="book-card">
+            <div class="book-category">{{ book.category }}</div>
+            <h3 class="book-title">{{ book.title }}</h3>
+            <p class="book-author">{{ book.author }}</p>
+            <div class="book-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ book.percent_complete|default(0) }}%"></div>
+                </div>
+                <span class="progress-text">{{ "%.0f"|format(book.percent_complete|default(0)) }}%</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="section">
+    <h2 class="section-title">Explore by Tradition</h2>
+    <div class="category-grid">
+        {% for cat in categories %}
+        <a href="/browse/{{ cat.category|urlencode }}" class="category-card">
+            <h3>{{ cat.category }}</h3>
+            <div class="category-count">{{ cat.count }} texts</div>
+            <div class="category-downloaded">{{ cat.downloaded_count }} available</div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<script>
+async function refreshPassage() {
+    try {
+        const resp = await fetch('/api/random-passage');
+        const data = await resp.json();
+        if (data.text) {
+            const textEl = document.getElementById('wisdomText');
+            const sourceEl = document.getElementById('wisdomSource');
+            textEl.textContent = data.text.substring(0, 400);
+            // Clear and rebuild source safely
+            sourceEl.textContent = '';
+            const dash = document.createTextNode('\u2014 ');
+            const link = document.createElement('a');
+            link.href = '/search?q=' + encodeURIComponent(data.title);
+            link.textContent = data.title;
+            const byText = document.createTextNode(' by ' + data.author);
+            sourceEl.appendChild(dash);
+            sourceEl.appendChild(link);
+            sourceEl.appendChild(byText);
+        }
+    } catch(e) {
+        console.error('Failed to load passage:', e);
+    }
+}
+</script>
+{% endblock %}

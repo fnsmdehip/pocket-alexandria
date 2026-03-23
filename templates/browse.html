@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Browse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if current_category %}{{ current_category }}{% else %}Browse the Library{% endif %}</h1>
+    {% if current_category %}
+    <a href="/browse" class="btn btn-ghost">&larr; All Categories</a>
+    {% endif %}
+</div>
+
+{% if not current_category %}
+<div class="category-grid">
+    {% for cat in categories %}
+    <a href="/browse/{{ cat.category|urlencode }}" class="category-card">
+        <h3>{{ cat.category }}</h3>
+        <div class="category-count">{{ cat.count }} texts</div>
+        <div class="category-downloaded">{{ cat.downloaded_count }} available to read</div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if books %}
+<div class="book-list">
+    {% for book in books %}
+    <div class="book-list-item">
+        <div class="book-list-info">
+            <h3 class="book-list-title">
+                {% if book.downloaded %}
+                <a href="/read/{{ book.id }}">{{ book.title }}</a>
+                {% else %}
+                {{ book.title }}
+                {% endif %}
+            </h3>
+            <p class="book-list-author">{{ book.author }} &middot; {{ book.year }}</p>
+            <p class="book-list-desc">{{ book.description }}</p>
+            {% if book.subcategory %}
+            <span class="badge">{{ book.subcategory }}</span>
+            {% endif %}
+        </div>
+        <div class="book-list-actions">
+            {% if book.downloaded %}
+            <a href="/read/{{ book.id }}" class="btn btn-primary">Read</a>
+            <a href="/book/{{ book.id }}" class="btn btn-ghost">Details</a>
+            {% else %}
+            <span class="badge badge-dim">Not Downloaded</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

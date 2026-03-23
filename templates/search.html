@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Search the Library</h1>
+</div>
+
+<div class="search-page">
+    <form action="/search" method="GET" class="search-form-large">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search across all texts..." autofocus autocomplete="off">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    {% if query %}
+    <p class="search-meta">
+        {% if results %}
+        Found {{ results|length }} results for "{{ query }}"
+        {% else %}
+        No results found for "{{ query }}". Make sure books are downloaded and indexed.
+        {% endif %}
+    </p>
+    {% endif %}
+
+    {% if results %}
+    <div class="search-results">
+        {% for result in results %}
+        <div class="search-result">
+            <h3>
+                <a href="/read/{{ result.book_id }}">{{ result.title }}</a>
+            </h3>
+            <div class="search-result-meta">
+                {{ result.author }} &middot; {{ result.category }}
+            </div>
+            <p class="search-result-snippet">...{{ result.text[:300] }}...</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% elif not query %}
+    <div class="search-suggestions">
+        <h3>Suggested Searches</h3>
+        <div class="suggestion-tags">
+            <a href="/search?q=alchemy" class="tag">alchemy</a>
+            <a href="/search?q=wisdom" class="tag">wisdom</a>
+            <a href="/search?q=soul" class="tag">soul</a>
+            <a href="/search?q=hermetic" class="tag">hermetic</a>
+            <a href="/search?q=meditation" class="tag">meditation</a>
+            <a href="/search?q=divine" class="tag">divine</a>
+            <a href="/search?q=truth" class="tag">truth</a>
+            <a href="/search?q=virtue" class="tag">virtue</a>
+            <a href="/search?q=consciousness" class="tag">consciousness</a>
+            <a href="/search?q=prophecy" class="tag">prophecy</a>
+            <a href="/search?q=initiation" class="tag">initiation</a>
+            <a href="/search?q=karma" class="tag">karma</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

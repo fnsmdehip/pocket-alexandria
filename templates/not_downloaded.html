@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} - Not Downloaded{% endblock %}
+
+{% block content %}
+<div class="empty-state">
+    <div class="empty-icon">&#128218;</div>
+    <h2>{{ book.title }}</h2>
+    <p>by {{ book.author }} ({{ book.year }})</p>
+    <p style="margin-top: 1rem; color: var(--text-muted);">
+        This text hasn't been downloaded yet.
+    </p>
+    <p style="color: var(--text-muted);">
+        Run <code>python pocket_alexandria.py download</code> to add it to your library.
+    </p>
+    <a href="/browse/{{ book.category|urlencode }}" class="btn btn-primary" style="margin-top: 1rem;">&larr; Back to {{ book.category }}</a>
+</div>
+{% endblock %}

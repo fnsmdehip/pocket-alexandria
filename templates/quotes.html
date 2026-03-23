@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Quotes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Collected Wisdom</h1>
+    <p class="page-subtitle">The most profound passages from the hidden library.</p>
+</div>
+
+{% if quotes %}
+<div class="quotes-grid">
+    {% for quote in quotes %}
+    <div class="quote-card">
+        <blockquote class="quote-text">{{ quote.text|truncate_words(60) }}</blockquote>
+        <cite class="quote-source">
+            &mdash; {{ quote.title }} by {{ quote.author }}
+        </cite>
+        {% if quote.virality_score > 0 %}
+        <div class="quote-score">Score: {{ "%.1f"|format(quote.virality_score) }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">&#10077;</div>
+    <h3>No Quotes Yet</h3>
+    <p>Run <code>python generate_quotes.py</code> to extract profound quotes from your library.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Reading: {{ book.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .reader-container {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+    .reader-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .reader-header h1 {
+        font-family: 'Cinzel', serif;
+        font-size: 1.8rem;
+        color: var(--gold);
+        margin-bottom: 0.25rem;
+    }
+    .reader-header .author {
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    .reader-text {
+        font-family: 'Crimson Text', Georgia, serif;
+        font-size: 1.2rem;
+        line-height: 1.9;
+        color: var(--text);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    .reader-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 0;
+        margin-top: 2rem;
+        border-top: 1px solid var(--border);
+    }
+    .reader-nav .page-info {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    .reader-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--gold), var(--accent-purple));
+        transition: width 0.3s ease;
+        z-index: 1000;
+    }
+    .reader-toolbar {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        z-index: 100;
+    }
+    .reader-toolbar .btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .font-controls {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .font-controls button {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .font-controls button:hover {
+        background: var(--surface-hover);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reader-progress" id="readingProgress"
+     style="width: {{ ((current_page + 1) / total_pages * 100) if total_pages > 0 else 0 }}%"></div>
+
+<div class="reader-container">
+    <div class="reader-header">
+        <h1>{{ book.title }}</h1>
+        <p class="author">{{ book.author }} &middot; {{ book.year }}</p>
+        <div class="font-controls">
+            <button onclick="changeFontSize(-1)" title="Decrease font">A-</button>
+            <button onclick="changeFontSize(1)" title="Increase font">A+</button>
+            <button onclick="toggleSerifFont()" title="Toggle font">Serif/Sans</button>
+        </div>
+    </div>
+
+    <div class="reader-text" id="readerText">{{ content }}</div>
+
+    <div class="reader-nav">
+        {% if current_page > 0 %}
+        <a href="/read/{{ book.id }}?page={{ current_page - 1 }}" class="btn btn-ghost">&larr; Previous</a>
+        {% else %}
+        <span></span>
+        {% endif %}
+
+        <span class="page-info">
+            Page {{ current_page + 1 }} of {{ total_pages }}
+        </span>
+
+        {% if current_page < total_pages - 1 %}
+        <a href="/read/{{ book.id }}?page={{ current_page + 1 }}" class="btn btn-ghost">Next &rarr;</a>
+        {% else %}
+        <span class="page-info">End of text</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="reader-toolbar">
+    <button class="btn btn-primary" onclick="addBookmark()" title="Bookmark this page">&#9733;</button>
+    <a href="/book/{{ book.id }}" class="btn btn-ghost" title="Book details">&#9432;</a>
+    <a href="/browse/{{ book.category|urlencode }}" class="btn btn-ghost" title="Back to browse">&larr;</a>
+</div>
+
+<script>
+// Save reading progress
+fetch('/api/progress', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+        book_id: {{ book.id }},
+        position: {{ current_page }},
+        total: {{ total_pages }}
+    })
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'n') {
+        {% if current_page < total_pages - 1 %}
+        window.location.href = '/read/{{ book.id }}?page={{ current_page + 1 }}';
+        {% endif %}
+    } else if (e.key === 'ArrowLeft' || e.key === 'p') {
+        {% if current_page > 0 %}
+        window.location.href = '/read/{{ book.id }}?page={{ current_page - 1 }}';
+        {% endif %}
+    }
+});
+
+function changeFontSize(delta) {
+    const el = document.getElementById('readerText');
+    const current = parseFloat(window.getComputedStyle(el).fontSize);
+    el.style.fontSize = (current + delta * 2) + 'px';
+    localStorage.setItem('pa-font-size', el.style.fontSize);
+}
+
+function toggleSerifFont() {
+    const el = document.getElementById('readerText');
+    if (el.style.fontFamily && el.style.fontFamily.includes('sans-serif')) {
+        el.style.fontFamily = "'Crimson Text', Georgia, serif";
+    } else {
+        el.style.fontFamily = "'Inter', system-ui, sans-serif";
+    }
+}
+
+function addBookmark() {
+    const snippet = document.getElementById('readerText').textContent.substring(0, 200);
+    fetch('/api/bookmark', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            book_id: {{ book.id }},
+            position: {{ current_page }},
+            label: 'Page {{ current_page + 1 }}',
+            snippet: snippet
+        })
+    }).then(() => {
+        alert('Bookmark saved!');
+    });
+}
+
+// Restore font size
+const savedSize = localStorage.getItem('pa-font-size');
+if (savedSize) {
+    document.getElementById('readerText').style.fontSize = savedSize;
+}
+</script>
+{% endblock %}

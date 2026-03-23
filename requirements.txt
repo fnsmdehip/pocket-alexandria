@@ -1,0 +1,14 @@
+# Pocket Alexandria - Dependencies
+# Core
+flask>=3.0.0
+requests>=2.31.0
+
+# Terminal UI
+rich>=13.7.0
+tqdm>=4.66.0
+
+# Web scraping (for discovery engine)
+beautifulsoup4>=4.12.0
+
+# Optional: better HTML parsing
+lxml>=5.0.0
